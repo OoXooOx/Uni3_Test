@@ -65,7 +65,7 @@ library Tick {
         info.feeGrowthOutside1X128 =
             feeGrowthGlobal1X128 -
             info.feeGrowthOutside1X128;
-        liquidityDelta = info.liquidityNet;
+        liquidityDelta = info.liquidityNet; // liquidityDelta = 1517818840967415409418
     }
 
     function getFeeGrowthInside(

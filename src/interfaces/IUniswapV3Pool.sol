@@ -13,10 +13,19 @@ interface IUniswapV3Pool {
         view
         returns (
             uint160 sqrtPriceX96,
-            int24 tick,
-            uint16 observationIndex,
-            uint16 observationCardinality,
-            uint16 observationCardinalityNext
+        // the current tick
+        int24 tick,
+        // the most-recently updated index of the observations array
+        uint16 observationIndex,
+        // the current maximum number of observations that are being stored
+        uint16 observationCardinality,
+        // the next maximum number of observations to store, triggered in observations.write
+        uint16 observationCardinalityNext,
+        // the current protocol fee as a percentage of the swap fee taken on withdrawal
+        // represented as an integer denominator (1/x)%
+        uint8 feeProtocol,
+        // whether the pool is locked
+        bool unlocked
         );
 
     function factory() external view returns (address);
@@ -25,7 +34,7 @@ interface IUniswapV3Pool {
 
     function token1() external view returns (address);
 
-    function tickSpacing() external view returns (uint24);
+    function tickSpacing() external view returns (int24);
 
     function fee() external view returns (uint24);
 
@@ -65,7 +74,7 @@ interface IUniswapV3Pool {
     function swap(
         address recipient,
         bool zeroForOne,
-        uint256 amountSpecified,
+        int256 amountSpecified,
         uint160 sqrtPriceLimitX96,
         bytes calldata data
     ) external returns (int256, int256);

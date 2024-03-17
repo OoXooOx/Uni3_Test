@@ -19,13 +19,14 @@ contract UniswapV3Factory is IUniswapV3PoolDeployer {
 
     PoolParameters public parameters;
 
-    mapping(uint24 => uint24) public fees;
+    mapping(uint24 => int24) public fees;
     mapping(address => mapping(address => mapping(uint24 => address)))
         public pools;
 
     constructor() {
         fees[500] = 10;
-        fees[3000] = 60;
+        fees[0] = 200;
+        // fees[0] = 1;
     }
 
     function createPool(
@@ -34,7 +35,7 @@ contract UniswapV3Factory is IUniswapV3PoolDeployer {
         uint24 fee
     ) public returns (address pool) {
         if (tokenX == tokenY) revert TokensMustBeDifferent();
-        if (fees[fee] == 0) revert UnsupportedFee();
+        // if (fees[fee] == 0) revert UnsupportedFee();
 
         (tokenX, tokenY) = tokenX < tokenY
             ? (tokenX, tokenY)
@@ -55,7 +56,13 @@ contract UniswapV3Factory is IUniswapV3PoolDeployer {
         pool = address(
             new UniswapV3Pool{
                 salt: keccak256(abi.encodePacked(tokenX, tokenY, fee))
-            }()
+            }(
+                // address(this),
+                // tokenX,
+                // tokenY,
+                // fees[fee],
+                // fee
+            )
         );
 
         delete parameters;

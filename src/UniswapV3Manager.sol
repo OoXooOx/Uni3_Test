@@ -9,6 +9,49 @@ import "./lib/Path.sol";
 import "./lib/PoolAddress.sol";
 import "./lib/TickMath.sol";
 
+// interface IUniswapV3Manager {
+//     struct GetPositionParams {
+//         address tokenA;
+//         address tokenB;
+//         uint24 fee;
+//         address owner;
+//         int24 lowerTick;
+//         int24 upperTick;
+//     }
+
+//     struct MintParams {
+//         address tokenA;
+//         address tokenB;
+//         uint24 fee;
+//         int24 lowerTick;
+//         int24 upperTick;
+//         uint256 amount0Desired;
+//         uint256 amount1Desired;
+//         uint256 amount0Min;
+//         uint256 amount1Min;
+//     }
+
+//     struct SwapSingleParams {
+//         address tokenIn;
+//         address tokenOut;
+//         uint24 fee;
+//         uint256 amountIn;
+//         uint160 sqrtPriceLimitX96;
+//     }
+
+//     struct SwapParams {
+//         bytes path;
+//         address recipient;
+//         uint256 amountIn;
+//         uint256 minAmountOut;
+//     }
+
+//     struct SwapCallbackData {
+//         bytes path;
+//         address payer;
+//     }
+// }
+
 contract UniswapV3Manager is IUniswapV3Manager {
     using Path for bytes;
 
@@ -51,13 +94,14 @@ contract UniswapV3Manager is IUniswapV3Manager {
         );
     }
 
-    function mint(MintParams calldata params)
-        public
-        returns (uint256 amount0, uint256 amount1)
-    {
-        IUniswapV3Pool pool = getPool(params.tokenA, params.tokenB, params.fee);
+    int24 public lowerTick; 
+    int24 public upperTick; 
 
-        (uint160 sqrtPriceX96, , , , ) = pool.slot0();
+    function mint(MintParams calldata params) public returns (uint256 amount0, uint256 amount1) {
+        IUniswapV3Pool pool = getPool(params.tokenA, params.tokenB, params.fee);
+        //for fork
+        // IUniswapV3Pool pool = IUniswapV3Pool(0x67B62f0cb3039e2c1efc64e853Db7317Db4f3974);
+        (uint160 sqrtPriceX96, , , , , , ) = pool.slot0();
         uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(
             params.lowerTick
         );
@@ -72,7 +116,10 @@ contract UniswapV3Manager is IUniswapV3Manager {
             params.amount0Desired,
             params.amount1Desired
         );
+        
 
+        upperTick=params.upperTick;
+        lowerTick=params.lowerTick;
         (amount0, amount1) = pool.mint(
             msg.sender,
             params.lowerTick,
@@ -83,7 +130,7 @@ contract UniswapV3Manager is IUniswapV3Manager {
                     token0: pool.token0(),
                     token1: pool.token1(),
                     payer: msg.sender
-                })
+                })   
             )
         );
 
@@ -91,10 +138,8 @@ contract UniswapV3Manager is IUniswapV3Manager {
             revert SlippageCheckFailed(amount0, amount1);
     }
 
-    function swapSingle(SwapSingleParams calldata params)
-        public
-        returns (uint256 amountOut)
-    {
+
+    function swapSingle(SwapSingleParams calldata params) public returns (uint256 amountOut) {
         amountOut = _swap(
             params.amountIn,
             msg.sender,
@@ -140,26 +185,16 @@ contract UniswapV3Manager is IUniswapV3Manager {
             revert TooLittleReceived(amountOut);
     }
 
-    function _swap(
-        uint256 amountIn,
-        address recipient,
-        uint160 sqrtPriceLimitX96,
-        SwapCallbackData memory data
-    ) internal returns (uint256 amountOut) {
-        (address tokenIn, address tokenOut, uint24 tickSpacing) = data
-            .path
-            .decodeFirstPool();
+    function _swap(uint256 amountIn, address recipient, uint160 sqrtPriceLimitX96, SwapCallbackData memory data) internal  returns (uint256 amountOut) {
+        (address tokenIn, address tokenOut, uint24 tickSpacing) = data.path.decodeFirstPool();
 
         bool zeroForOne = tokenIn < tokenOut;
-
-        (int256 amount0, int256 amount1) = getPool(
-            tokenIn,
-            tokenOut,
-            tickSpacing
-        ).swap(
+        //for fork 
+        // (int256 amount0, int256 amount1) = IUniswapV3Pool(0x67B62f0cb3039e2c1efc64e853Db7317Db4f3974).swap(
+        (int256 amount0, int256 amount1) = getPool(tokenIn, tokenOut, tickSpacing).swap(
                 recipient,
                 zeroForOne,
-                amountIn,
+                int256(amountIn),
                 sqrtPriceLimitX96 == 0
                     ? (
                         zeroForOne

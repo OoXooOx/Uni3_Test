@@ -26,8 +26,8 @@ library TickBitmap {
     /// @param tickSpacing The spacing between usable ticks
     function flipTick(
         mapping(int16 => uint256) storage self,
-        int24 tick,
-        int24 tickSpacing
+        int24 tick,  // 84240 
+        int24 tickSpacing // 60
     ) internal {
         require(tick % tickSpacing == 0); // ensure that the tick is spaced
         (int16 wordPos, uint8 bitPos) = position(tick / tickSpacing);

@@ -279,7 +279,7 @@ contract UniswapV3NFTManager is ERC721 {
             uint256 amount1
         )
     {
-        (uint160 sqrtPriceX96, , , , ) = params.pool.slot0();
+        (uint160 sqrtPriceX96, , , , , , ) = params.pool.slot0();
 
         liquidity = LiquidityMath.getLiquidityForAmounts(
             sqrtPriceX96,

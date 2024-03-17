@@ -52,7 +52,7 @@ contract UniswapV3FactoryTest is Test, TestUtils {
             int24 tick,
             uint16 observationIndex,
             uint16 observationCardinality,
-            uint16 observationCardinalityNext
+            uint16 observationCardinalityNext, , 
         ) = pool.slot0();
         assertEq(sqrtPriceX96, 0, "invalid sqrtPriceX96");
         assertEq(tick, 0, "invalid tick");

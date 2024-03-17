@@ -13,12 +13,14 @@ import "../src/UniswapV3Pool.sol";
 import "./ERC20Mintable.sol";
 import "./Assertions.sol";
 
-abstract contract TestUtils is Test, Assertions {
+abstract contract TestUtils is Test
+    , Assertions
+ {
     mapping(uint24 => uint24) internal tickSpacings;
 
     constructor() {
         tickSpacings[500] = 10;
-        tickSpacings[3000] = 60;
+        tickSpacings[0] = 200;
     }
 
     function divRound(int128 x, int128 y)
@@ -67,9 +69,17 @@ abstract contract TestUtils is Test, Assertions {
         return TickMath.getSqrtRatioAtTick(tick60(price));
     }
 
+    function sqrtP200(uint256 price) internal pure returns (uint160) {
+        return TickMath.getSqrtRatioAtTick(tick200(price));
+    }
+
     // Calculates sqrtP from tick with tick spacing equal to 60;
     function sqrtP60FromTick(int24 tick_) internal pure returns (uint160) {
         return TickMath.getSqrtRatioAtTick(nearestUsableTick(tick_, 60));
+    }
+
+    function sqrtP200FromTick(int24 tick_) internal pure returns (uint160) {
+        return TickMath.getSqrtRatioAtTick(nearestUsableTick(tick_, 200));
     }
 
     function tick(uint256 price) internal pure returns (int24 tick_) {
@@ -80,6 +90,16 @@ abstract contract TestUtils is Test, Assertions {
     function tick60(uint256 price) internal pure returns (int24 tick_) {
         tick_ = tick(price);
         tick_ = nearestUsableTick(tick_, 60);
+    }
+
+    function tick200(uint256 price) internal pure returns (int24 tick_) {
+        tick_ = tick(price);
+        tick_ = nearestUsableTick(tick_, 200);
+    }
+
+     function tick5(uint256 price) internal pure returns (int24 tick_) {
+        tick_ = tick(price);
+        tick_ = nearestUsableTick(tick_, 5);
     }
 
     function sqrtPToNearestTick(uint160 sqrtP_, uint24 tickSpacing)
@@ -126,7 +146,7 @@ abstract contract TestUtils is Test, Assertions {
             );
     }
 
-    function mintParams(
+    function mintParamsFromTestUtils(
         address tokenA,
         address tokenB,
         uint256 lowerPrice,
@@ -137,9 +157,30 @@ abstract contract TestUtils is Test, Assertions {
         params = IUniswapV3Manager.MintParams({
             tokenA: tokenA,
             tokenB: tokenB,
-            fee: 3000,
-            lowerTick: tick60(lowerPrice),
-            upperTick: tick60(upperPrice),
+            fee: 0,
+            lowerTick: tick200(lowerPrice), /// -887200
+            upperTick: tick200(upperPrice), /// -887000
+            amount0Desired: amount0,
+            amount1Desired: amount1,
+            amount0Min: 0,
+            amount1Min: 0
+        });
+    }
+
+    function mintParamsN1(
+        address tokenA,
+        address tokenB,
+        uint256 lowerPrice,
+        uint256 upperPrice,
+        uint256 amount0,
+        uint256 amount1
+    ) internal pure returns (IUniswapV3Manager.MintParams memory params) {
+        params = IUniswapV3Manager.MintParams({
+            tokenA: tokenA,
+            tokenB: tokenB,
+            fee: 0,
+            lowerTick: -887200, /// -887200
+            upperTick: -887000, /// -887000
             amount0Desired: amount0,
             amount1Desired: amount1,
             amount0Min: 0,
